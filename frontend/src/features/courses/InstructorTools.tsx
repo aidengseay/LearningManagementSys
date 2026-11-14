@@ -11,7 +11,15 @@ const TOOLS = [
 
 type ToolId = (typeof TOOLS)[number]['id']
 
-export default function InstructorTools({ courseId }: { courseId: number }) {
+export default function InstructorTools({
+  courseId,
+  onQuizCreated,
+  onAnnouncementCreated
+}: {
+  courseId: number
+  onQuizCreated?: () => void
+  onAnnouncementCreated?: () => void
+}) {
   const [activeTool, setActiveTool] = useState<ToolId>('enroll')
 
   // Arrow keys / Home / End move between tabs, as expected for a tablist
@@ -74,7 +82,7 @@ export default function InstructorTools({ courseId }: { courseId: number }) {
         className="instructor-tab-panel"
         hidden={activeTool !== 'quiz'}
       >
-        <QuizCreator courseId={courseId} />
+        <QuizCreator courseId={courseId} onCreated={onQuizCreated} />
       </div>
 
       <div
@@ -84,7 +92,7 @@ export default function InstructorTools({ courseId }: { courseId: number }) {
         className="instructor-tab-panel"
         hidden={activeTool !== 'announce'}
       >
-        <AnnouncementForm courseId={courseId} />
+        <AnnouncementForm courseId={courseId} onCreated={onAnnouncementCreated} />
       </div>
     </>
   )

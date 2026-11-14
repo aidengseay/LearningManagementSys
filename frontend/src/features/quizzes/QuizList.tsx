@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { useDemo } from '../demo/store'
+import { getQuizzes } from '../../api/quizzes'
+import type { QuizListItem } from '../../api/types'
+import { useAuth } from '../auth/AuthContext'
 
 function formatDue(due: string) {
   const date = new Date(`${due}T00:00:00`)
@@ -12,9 +15,25 @@ function formatDue(due: string) {
       })
 }
 
-export default function QuizList({ courseId }: { courseId: number }) {
-  const { quizzes, submissions, user } = useDemo()
-  const courseQuizzes = quizzes.filter(q => q.courseId === courseId)
+export default function QuizList({ courseId, refreshKey = 0 }: { courseId: number; refreshKey?: number }) {
+  const { user } = useAuth()
+  const [courseQuizzes, setCourseQuizzes] = useState<QuizListItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setError('')
+    getQuizzes(courseId)
+      .then(items => { if (active) setCourseQuizzes(items) })
+      .catch(err => { if (active) setError(err instanceof Error ? err.message : 'Unable to load quizzes') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [courseId, refreshKey])
+
+  if (loading) return <p className="muted">Loading quizzes…</p>
+  if (error) return <p role="alert" className="error">{error}</p>
 
   if (courseQuizzes.length === 0) {
     return (
@@ -32,10 +51,8 @@ export default function QuizList({ courseId }: { courseId: number }) {
   return (
     <div className="quiz-list">
       {courseQuizzes.map(q => {
-        const done = submissions.find(
-          s => s.quizId === q.id && s.studentId === user?.id
-        )
-        const count = q.questions.length
+        const done = q.submitted
+        const count = q.questionCount
 
         return (
           <div className="quiz-row" key={q.id}>
@@ -64,11 +81,11 @@ export default function QuizList({ courseId }: { courseId: number }) {
             {done ? (
               <span className="quiz-score">
                 <strong>
-                  {done.score}/{done.total}
+                  {q.score}/{q.total}
                 </strong>
                 <span>
-                  {done.total
-                    ? Math.round((done.score / done.total) * 100)
+                  {q.total
+                    ? Math.round(((q.score ?? 0) / q.total) * 100)
                     : 0}
                   %
                 </span>

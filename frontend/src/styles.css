@@ -11,7 +11,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -40,7 +41,8 @@ button.secondary {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   padding: 12px;
   border: 1px solid #cbd5e1;
@@ -50,7 +52,8 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
@@ -145,24 +148,20 @@ label {
   background: #2563eb;
 }
 
-.login-demo {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-top: 15px;
-  border-top: 1px solid #d1d5db;
+.login-switch {
+  margin: 2px 0 0;
   color: #64748b;
-}
-
-.login-demo p {
-  margin: 0 0 5px;
   font-size: 13px;
-  font-weight: bold;
-  color: #334155;
+  text-align: center;
 }
 
-.login-demo small {
-  font-size: 12px;
+.login-switch a {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.register-card {
+  max-width: 500px;
 }
 
 /* SHARED APP SHELL */
@@ -989,7 +988,7 @@ label {
       rgba(10, 25, 40, 0.85),
       rgba(10, 25, 40, 0.35)
     ),
-    url('/flagstaff-background.jpg.png') center 45% / cover no-repeat;
+    url('/flagstaff-background.png') center 45% / cover no-repeat;
 }
 
 .course-hero h1 {

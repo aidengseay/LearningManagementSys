@@ -16,7 +16,16 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   })
   if (!response.ok) {
     let message = `Request failed (${response.status})`
-    try { const body: { detail?: string } = await response.json(); message = body.detail ?? message } catch { /* no JSON body */ }
+    try {
+      const body: { detail?: unknown } = await response.json()
+      if (typeof body.detail === 'string') message = body.detail
+      else if (Array.isArray(body.detail)) {
+        const messages = body.detail
+          .map(item => typeof item === 'object' && item !== null && 'msg' in item ? String(item.msg) : '')
+          .filter(Boolean)
+        if (messages.length) message = messages.join('. ')
+      }
+    } catch { /* no JSON body */ }
     throw new Error(message)
   }
   return response.json() as Promise<T>

@@ -91,3 +91,11 @@ class Announcement(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
+
+
+# Dedicated join-code table avoids altering the existing courses schema.
+class CourseJoinCode(Base):
+    __tablename__ = 'course_join_codes'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey('courses.id'), unique=True, index=True)
+    code: Mapped[str] = mapped_column(String(12), unique=True, index=True)

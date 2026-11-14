@@ -1,18 +1,21 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { useDemo } from '../demo/store'
+import { getTodos } from '../../api/quizzes'
+import type { TodoItem } from '../../api/types'
 
 export default function TodoList() {
-  const { user, courses, quizzes, submissions } = useDemo()
-  const visible = quizzes
-    .filter(quiz =>
-      courses.some(course =>
-        course.id === quiz.courseId && user && course.studentIds.includes(user.id)
-      ) &&
-      !submissions.some(submission =>
-        submission.quizId === quiz.id && submission.studentId === user?.id
-      )
-    )
-    .sort((a, b) => a.due.localeCompare(b.due))
+  const [visible, setVisible] = useState<TodoItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    getTodos()
+      .then(items => { if (active) setVisible(items) })
+      .catch(err => { if (active) setError(err instanceof Error ? err.message : 'Unable to load to-do list') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
 
   return (
     <section className="dashboard-panel dashboard-todo-panel">
@@ -24,7 +27,11 @@ export default function TodoList() {
         <span className="dashboard-section-count">{visible.length} pending</span>
       </div>
 
-      {visible.length === 0 ? (
+      {loading ? (
+        <p className="muted">Loading to-do list…</p>
+      ) : error ? (
+        <p role="alert" className="error">{error}</p>
+      ) : visible.length === 0 ? (
         <div className="dashboard-empty dashboard-empty-compact">
           <h3>You're all caught up!</h3>
           <p>There are no outstanding quizzes right now.</p>
@@ -32,13 +39,13 @@ export default function TodoList() {
       ) : (
         <div className="dashboard-todo-list">
           {visible.map(quiz => (
-            <div className="dashboard-todo-item" key={quiz.id}>
+            <div className="dashboard-todo-item" key={quiz.quizId}>
               <div className="dashboard-todo-marker" aria-hidden="true" />
               <div className="dashboard-todo-info">
                 <strong>{quiz.title}</strong>
                 <span>Due {quiz.due}</span>
               </div>
-              <Link className="dashboard-text-link" to={`/quizzes/${quiz.id}`}>Start</Link>
+              <Link className="dashboard-text-link" to={`/quizzes/${quiz.quizId}`}>Start</Link>
             </div>
           ))}
         </div>

@@ -1,28 +1,29 @@
 from contextlib import asynccontextmanager
+import secrets
+from typing import Literal
 
 from email_validator import EmailNotValidError, validate_email
 from fastapi import Depends, FastAPI, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth import current_user, get_db, make_token, require_instructor, verify_password
+from app.auth import current_user, get_db, hash_password, make_token, require_instructor, verify_password
 from app.database import Base, check_database, engine
-from app.models import Course, Enrollment, User  # registers models before create_all
+from app.models import Course, CourseJoinCode, Enrollment, User  # registers models before create_all
 from app.quizzes import router as quiz_router
 from app.announcements import router as announcement_router
-from app.seed import seed_demo_data
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Development-only table creation; use Alembic migrations later.
     Base.metadata.create_all(bind=engine)
-    seed_demo_data()
     yield
 
 
-app = FastAPI(title='Learning Management System', version='0.3.0', lifespan=lifespan)
+app = FastAPI(title='Learning Management System', version='0.4.0', lifespan=lifespan)
 app.include_router(quiz_router)
 app.include_router(announcement_router)
 
@@ -51,6 +52,20 @@ class EmailBody(BaseModel):
 
 class LoginBody(EmailBody):
     password: str
+
+
+class RegisterBody(EmailBody):
+    name: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=8, max_length=128)
+    role: Literal['STUDENT', 'INSTRUCTOR']
+
+    @field_validator('name')
+    @classmethod
+    def nonblank_name(cls, value: str) -> str:
+        name = value.strip()
+        if not name:
+            raise ValueError('Name cannot be blank')
+        return name
 
 
 class UserOut(BaseModel):
@@ -84,6 +99,19 @@ class EnrollmentBody(EmailBody):
     pass
 
 
+class JoinBody(BaseModel):
+    code: str = Field(min_length=1, max_length=32)
+
+
+class JoinCodeOut(BaseModel):
+    courseId: int
+    code: str
+
+
+class StudentOut(UserOut):
+    pass
+
+
 def visible_course(course: Course, db: Session) -> CourseOut:
     ids = db.scalars(select(Enrollment.student_id).where(Enrollment.course_id == course.id)).all()
     return CourseOut(id=course.id, name=course.name, description=course.description,
@@ -102,6 +130,25 @@ def get_authorized_course(course_id: int, user: User, db: Session) -> Course:
     raise HTTPException(403, detail='Not enrolled in this course')
 
 
+def ensure_join_code(course: Course, db: Session) -> str:
+    existing = db.scalar(select(CourseJoinCode).where(CourseJoinCode.course_id == course.id))
+    if existing is not None:
+        return existing.code
+    # A fresh random code is created for new and legacy courses.
+    # A unique database constraint prevents duplicated codes.
+    code = secrets.token_hex(5).upper()
+    db.add(CourseJoinCode(course_id=course.id, code=code))
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        existing = db.scalar(select(CourseJoinCode).where(CourseJoinCode.course_id == course.id))
+        if existing is not None:
+            return existing.code
+        raise HTTPException(503, detail='Could not generate an enrollment code; retry') from None
+    return code
+
+
 @app.get('/api')
 def root():
     return {'message': 'LMS API is running'}
@@ -114,6 +161,20 @@ def health():
         return {'status': 'healthy', 'database': 'connected'}
     except Exception:
         raise HTTPException(503, detail='Database unavailable') from None
+
+
+@app.post('/api/auth/register', response_model=LoginOut, status_code=status.HTTP_201_CREATED)
+def register(body: RegisterBody, db: Session = Depends(get_db)):
+    user = User(name=body.name, email=body.email, role=body.role,
+                password_hash=hash_password(body.password))
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail='Email is already registered') from None
+    db.refresh(user)
+    return LoginOut(access_token=make_token(user), user=UserOut.model_validate(user))
 
 
 @app.post('/api/auth/login', response_model=LoginOut)
@@ -149,6 +210,7 @@ def create_course(body: CourseBody, instructor: User = Depends(require_instructo
     db.add(course)
     db.commit()
     db.refresh(course)
+    ensure_join_code(course, db)
     return visible_course(course, db)
 
 
@@ -169,4 +231,49 @@ def enroll(course_id: int, body: EnrollmentBody,
     if existing is None:
         db.add(Enrollment(course_id=course_id, student_id=student.id))
         db.commit()
+    return visible_course(course, db)
+
+
+@app.get('/api/courses/{course_id}/join-code', response_model=JoinCodeOut)
+def get_join_code(course_id: int, instructor: User = Depends(require_instructor),
+                  db: Session = Depends(get_db)):
+    course = get_authorized_course(course_id, instructor, db)
+    return JoinCodeOut(courseId=course.id, code=ensure_join_code(course, db))
+
+
+@app.get('/api/courses/{course_id}/students', response_model=list[StudentOut])
+def list_course_students(course_id: int, instructor: User = Depends(require_instructor),
+                         db: Session = Depends(get_db)):
+    get_authorized_course(course_id, instructor, db)
+    students = db.scalars(select(User).join(Enrollment, User.id == Enrollment.student_id).where(
+        Enrollment.course_id == course_id, User.role == 'STUDENT'
+    ).order_by(User.name, User.id)).all()
+    return students
+
+
+@app.post('/api/enrollments/join', response_model=CourseOut)
+def join_course(body: JoinBody, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if user.role != 'STUDENT':
+        raise HTTPException(403, detail='Only students can join courses')
+    code = body.code.strip().upper()
+    record = db.scalar(select(CourseJoinCode).where(CourseJoinCode.code == code))
+    if record is None:
+        raise HTTPException(404, detail='Course code not found')
+    course = db.get(Course, record.course_id)
+    if course is None:
+        raise HTTPException(404, detail='Course not found')
+    existing = db.scalar(select(Enrollment.id).where(
+        Enrollment.course_id == course.id, Enrollment.student_id == user.id
+    ))
+    if existing is None:
+        db.add(Enrollment(course_id=course.id, student_id=user.id))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            # Concurrent enrollment: another request may already have added the student.
+            if db.scalar(select(Enrollment.id).where(
+                Enrollment.course_id == course.id, Enrollment.student_id == user.id
+            )) is None:
+                raise
     return visible_course(course, db)

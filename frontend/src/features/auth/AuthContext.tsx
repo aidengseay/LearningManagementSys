@@ -1,5 +1,5 @@
-import { useDemo } from '../demo/store'
+import { useAppStore } from '../app/store'
 export function useAuth() {
-  const { user, login, logout, loading } = useDemo()
-  return { user, login, logout, loading }
+  const { user, login, register, logout, loading } = useAppStore()
+  return { user, login, register, logout, loading }
 }

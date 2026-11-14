@@ -1,14 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { useDemo } from '../demo/store'
+import { useAppStore } from '../app/store'
 
 export default function EnrollStudentForm({
   courseId
 }: {
   courseId: number
 }) {
-  const { enrollStudent } = useDemo()
+  const { enrollStudent } = useAppStore()
 
-  const [email, setEmail] = useState('student@demo.test')
+  const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [busy, setBusy] = useState(false)
@@ -23,6 +23,7 @@ export default function EnrollStudentForm({
     try {
       await enrollStudent(courseId, email)
       setSuccess('Student enrolled successfully, or was already enrolled.')
+      setEmail('')
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Could not enroll student.'

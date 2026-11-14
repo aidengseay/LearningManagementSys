@@ -1,11 +1,14 @@
-import { useState } from 'react'
-import { useDemo } from '../demo/store'
+import { useEffect, useState } from 'react'
+import { useAppStore } from '../app/store'
+import { getQuizzes } from '../../api/quizzes'
 import CourseCard from '../courses/CourseCard'
 import CreateCourseForm from '../courses/CreateCourseForm'
 import InstructorTools from '../courses/InstructorTools'
 
 export default function InstructorDashboard() {
-  const { user, courses, quizzes } = useDemo()
+  const { user, courses } = useAppStore()
+  const [quizCount, setQuizCount] = useState(0)
+  const [quizVersion, setQuizVersion] = useState(0)
 
   const mine = courses.filter(course => course.instructorId === user?.id)
   const [toolCourseId, setToolCourseId] = useState<number | null>(null)
@@ -18,10 +21,13 @@ export default function InstructorDashboard() {
     0
   )
 
-  const courseIds = new Set(mine.map(course => course.id))
-  const quizCount = quizzes.filter(quiz =>
-    courseIds.has(quiz.courseId)
-  ).length
+  useEffect(() => {
+    let active = true
+    Promise.all(mine.map(course => getQuizzes(course.id)))
+      .then(results => { if (active) setQuizCount(results.reduce((sum, items) => sum + items.length, 0)) })
+      .catch(() => { if (active) setQuizCount(0) })
+    return () => { active = false }
+  }, [courses, quizVersion])
 
   return (
     <div className="dashboard-page">
@@ -122,7 +128,11 @@ export default function InstructorDashboard() {
             </div>
 
             {/* key resets unsent drafts when switching course, so nothing is posted to the wrong one */}
-            <InstructorTools key={selectedCourseId} courseId={selectedCourseId} />
+            <InstructorTools
+              key={selectedCourseId}
+              courseId={selectedCourseId}
+              onQuizCreated={() => setQuizVersion(value => value + 1)}
+            />
           </div>
         ) : (
           <div className="dashboard-empty">
