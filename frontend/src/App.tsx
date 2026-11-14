@@ -10,12 +10,45 @@ import CoursePage from './features/courses/CoursePage'
 import QuizPage from './features/quizzes/QuizPage'
 import GradebookPage from './features/gradebook/GradebookPage'
 import './styles.css'
+
 function Shell() {
-  const { user, logout } = useAuth(); const navigate = useNavigate()
-  return <><header className="topbar"><Link to={user?.role === 'STUDENT' ? '/student' : '/instructor'} className="brand">LMS</Link>
-    <div className="actions"><span>{user?.name} · {user?.role.toLowerCase()}</span><button className="secondary" onClick={() => { logout(); navigate('/login') }}>Log out</button></div></header>
-    <main className="container"><Outlet /></main></>
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  return (
+    <>
+      <header className="topbar">
+        <Link
+          to={user?.role === 'STUDENT' ? '/student' : '/instructor'}
+          className="brand"
+        >
+          2 ½ LMS
+        </Link>
+
+        <div className="actions">
+          <span>
+            {user?.name} · {user?.role === 'STUDENT' ? 'Student' : 'Instructor'}
+          </span>
+
+          <button
+            className="secondary"
+            onClick={() => {
+              logout()
+              navigate('/login')
+            }}
+          >
+            Log Out
+          </button>
+        </div>
+      </header>
+
+      <main className="container">
+        <Outlet />
+      </main>
+    </>
+  )
 }
+
 function Home() { const { user, loading } = useAuth(); if (loading) return <p>Loading your account…</p>; return <Navigate to={user ? user.role === 'STUDENT' ? '/student' : '/instructor' : '/login'} replace /> }
 export default function App() {
   return <AppProvider><BrowserRouter><Routes>
