@@ -55,7 +55,7 @@ export default function StudentDashboard() {
       <TodoList />
       <aside className="dashboard-tip"><span className="dashboard-tip-mark">2 ½</span><h3>Stay on track</h3><p>Check your to-do list regularly so you don't miss an upcoming quiz or assessment.</p></aside>
     </div>
-
+    
     <section className="dashboard-create-section">
       <div className="dashboard-section-heading"><div><span className="dashboard-eyebrow dashboard-eyebrow-dark">ENROLLMENT</span><h2>Join a class</h2><p>Enter the code shared by your instructor.</p></div></div>
       <form className="dashboard-panel dashboard-create-form" onSubmit={submit}>

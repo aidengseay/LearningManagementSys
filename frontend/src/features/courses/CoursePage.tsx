@@ -51,7 +51,7 @@ export default function CoursePage() {
     </>}
 
     <section className="course-content-section panel">
-      <div className="course-section-heading"><div><p className="course-eyebrow">ASSESSMENTS</p><h2>Quizzes and assignments</h2><p>View the assessments available in this course.</p></div></div>
+      <div className="course-section-heading"><div><p className="course-eyebrow">ASSESSMENTS</p><h2>Quizzes</h2><p>View the assessments available in this course.</p></div></div>
       <QuizList courseId={course.id} refreshKey={quizVersion} />
     </section>
 

@@ -95,53 +95,6 @@ export default function InstructorDashboard() {
         )}
       </section>
 
-      {/* Instructor tools: one tool at a time, for the chosen course */}
-      <section className="dashboard-create-section">
-        <div className="dashboard-section-heading">
-          <div>
-            <span className="dashboard-eyebrow dashboard-eyebrow-dark">
-              INSTRUCTOR TOOLS
-            </span>
-            <h2>Manage a course</h2>
-            <p>
-              Choose a course, then pick a tool to enroll students, build an
-              assessment, or post an announcement.
-            </p>
-          </div>
-        </div>
-
-        {selectedCourseId !== null ? (
-          <div className="instructor-tools-card">
-            <div className="instructor-course-picker">
-              <label htmlFor="tools-course">Course</label>
-              <select
-                id="tools-course"
-                value={selectedCourseId}
-                onChange={event => setToolCourseId(Number(event.target.value))}
-              >
-                {mine.map(course => (
-                  <option key={course.id} value={course.id}>
-                    {course.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* key resets unsent drafts when switching course, so nothing is posted to the wrong one */}
-            <InstructorTools
-              key={selectedCourseId}
-              courseId={selectedCourseId}
-              onQuizCreated={() => setQuizVersion(value => value + 1)}
-            />
-          </div>
-        ) : (
-          <div className="dashboard-empty">
-            <h3>Create a course first</h3>
-            <p>These tools become available once you have a course.</p>
-          </div>
-        )}
-      </section>
-
       {/* Create a course */}
       <section className="dashboard-create-section">
         <div className="dashboard-section-heading">
