@@ -14,6 +14,7 @@ from app.database import Base, check_database, engine
 from app.models import Course, CourseJoinCode, Enrollment, User  # registers models before create_all
 from app.quizzes import router as quiz_router
 from app.announcements import router as announcement_router
+from app.curriculum import router as curriculum_router
 
 
 @asynccontextmanager
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title='Learning Management System', version='0.4.0', lifespan=lifespan)
 app.include_router(quiz_router)
 app.include_router(announcement_router)
+app.include_router(curriculum_router)
 
 
 def normalized_email(value: str) -> str:
