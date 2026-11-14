@@ -106,6 +106,10 @@ POSTGRES_USER=lms
 POSTGRES_PASSWORD=your_database_password
 POSTGRES_DB=lms_db
 
+# Local demo accounts
+DEMO_STUDENT_PASSWORD=your_student_demo_password
+DEMO_INSTRUCTOR_PASSWORD=your_instructor_demo_password
+
 # JWT Authentication
 JWT_SECRET_KEY=your_secret_key
 JWT_ALGORITHM=HS256
@@ -124,7 +128,9 @@ Copy the generated value into `JWT_SECRET_KEY`.
 
 - Never commit `.env` to Git.
 - `.env.example` can be committed because it contains no real credentials.
-- Authentication is not yet implemented in the initial project. The JWT variables are reserved for future development.
+- The backend creates the demo student, instructor, and starter course when it
+  starts. The demo emails are `student@demo.test` and
+  `instructor@demo.test`.
 - The frontend should never receive database credentials or JWT signing secrets.
 
 ### 3. Build and Start the Containers
@@ -206,7 +212,7 @@ Finally, open:
 
 http://localhost:5173
 
-The frontend should display the development environment status, including the backend and database connections.
+Log in with either demo email and its corresponding password from `.env`.
 
 ## Development Workflow
 
@@ -343,7 +349,10 @@ Scripts mounted into `/docker-entrypoint-initdb.d` are executed when PostgreSQL 
 
 They are not rerun automatically when an existing database volume is reused.
 
-The backend currently configures SQLAlchemy's database engine and model base class. LMS-specific database models and migrations have not yet been implemented.
+The backend creates the `users`, `courses`, and `enrollments` tables through
+SQLAlchemy during development. It also idempotently seeds the configured demo
+accounts and starter course. Use a migration tool such as Alembic before
+deploying schema changes to production.
 
 ## Frontend and Backend Communication
 
@@ -479,7 +488,9 @@ This configuration is intended for local development only.
 - Do not include `.env` when publicly sharing project ZIP files.
 - Do not expose PostgreSQL directly to the public network.
 - Do not include secret credentials in React source code.
-- JWT authentication is not active until it has been implemented in the backend.
+- Passwords are Argon2-hashed and login sessions use signed JWT bearer tokens.
+- Tokens are kept in browser session storage, so closing the tab ends the local
+  browser session.
 - Development servers using hot reload should not be used as a production deployment.
 
 ## Planned LMS Features

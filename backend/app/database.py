@@ -20,7 +20,11 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False,
+)
 
 
 class Base(DeclarativeBase):
@@ -28,6 +32,6 @@ class Base(DeclarativeBase):
 
 
 def check_database():
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
+    with engine.connect() as connection:
+        connection.execute(text("SELECT 1"))
     return True
