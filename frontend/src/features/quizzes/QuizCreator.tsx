@@ -1,22 +1,264 @@
 import { useState, type FormEvent } from 'react'
 import { useDemo, type Question } from '../demo/store'
-const blank = () => ({ text: '', options: ['', '', '', ''], correct: 0 })
-export default function QuizCreator({ courseId }: { courseId: number }) {
-  const { createQuiz } = useDemo(); const [title, setTitle] = useState(''); const [due, setDue] = useState('')
+
+const blank = () => ({
+  text: '',
+  options: ['', '', '', ''],
+  correct: 0
+})
+
+export default function QuizCreator({
+  courseId
+}: {
+  courseId: number
+}) {
+  const { createQuiz } = useDemo()
+
+  const [title, setTitle] = useState('')
+  const [due, setDue] = useState('')
   const [items, setItems] = useState([blank()])
-  function update(index: number, field: 'text' | 'correct', value: string | number) { setItems(old => old.map((q, i) => i === index ? { ...q, [field]: value } : q)) }
-  function option(index: number, which: number, value: string) { setItems(old => old.map((q, i) => i === index ? { ...q, options: q.options.map((o, j) => j === which ? value : o) } : q)) }
-  function submit(e: FormEvent) {
-    e.preventDefault(); if (!title.trim() || !due || items.some(q => !q.text.trim() || q.options.some(o => !o.trim()))) return
-    const questions: Question[] = items.map((q, i) => ({ ...q, id: Date.now() + i }))
-    createQuiz(courseId, title.trim(), due, questions); setTitle(''); setDue(''); setItems([blank()])
+  const [success, setSuccess] = useState('')
+
+  function update(
+    index: number,
+    field: 'text' | 'correct',
+    value: string | number
+  ) {
+    setSuccess('')
+    setItems(old =>
+      old.map((question, i) =>
+        i === index ? { ...question, [field]: value } : question
+      )
+    )
   }
-  return <form className="panel stack" onSubmit={submit}><h2>Create Quiz</h2><input placeholder="Quiz title" aria-label="Quiz title" value={title} onChange={e => setTitle(e.target.value)} required />
-    <label>Due date <input type="date" value={due} onChange={e => setDue(e.target.value)} required /></label>
-    {items.map((q, i) => <fieldset className="stack" key={i}><legend>Question {i + 1}</legend><input placeholder="Question text" aria-label={`Question ${i+1}`} value={q.text} onChange={e => update(i, 'text', e.target.value)} required />
-      {q.options.map((o, j) => <input key={j} placeholder={`Option ${'ABCD'[j]}`} aria-label={`Question ${i+1} option ${j+1}`} value={o} onChange={e => option(i, j, e.target.value)} required />)}
-      <label>Correct answer <select value={q.correct} onChange={e => update(i, 'correct', Number(e.target.value))}>{q.options.map((_, j) => <option key={j} value={j}>{'ABCD'[j]}</option>)}</select></label>
-    </fieldset>)}
-    <div className="actions"><button type="button" className="secondary" onClick={() => setItems(q => [...q, blank()])}>Add question</button><button type="submit">Publish quiz</button></div>
-  </form>
+
+  function updateOption(
+    index: number,
+    optionIndex: number,
+    value: string
+  ) {
+    setSuccess('')
+    setItems(old =>
+      old.map((question, i) =>
+        i === index
+          ? {
+              ...question,
+              options: question.options.map((option, j) =>
+                j === optionIndex ? value : option
+              )
+            }
+          : question
+      )
+    )
+  }
+
+  function submit(event: FormEvent) {
+    event.preventDefault()
+
+    if (
+      !title.trim() ||
+      !due ||
+      items.some(
+        question =>
+          !question.text.trim() ||
+          question.options.some(option => !option.trim())
+      )
+    ) {
+      return
+    }
+
+    const questions: Question[] = items.map((question, index) => ({
+      ...question,
+      id: Date.now() + index
+    }))
+
+    createQuiz(courseId, title.trim(), due, questions)
+
+    setTitle('')
+    setDue('')
+    setItems([blank()])
+    setSuccess('Quiz published. Students can now see it in this course.')
+  }
+
+  return (
+    <form className="panel stack instructor-tool-form tool-form" onSubmit={submit}>
+      <div className="tool-header">
+        <div className="tool-icon" aria-hidden="true">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="8" y="2" width="8" height="4" rx="1" />
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            <path d="m9 14 2 2 4-4" />
+          </svg>
+        </div>
+
+        <div className="tool-heading">
+          <span className="dashboard-eyebrow dashboard-eyebrow-dark">
+            ASSESSMENT MANAGEMENT
+          </span>
+          <h2>Create a quiz</h2>
+          <p>Build a quiz and publish it for students in this course.</p>
+        </div>
+      </div>
+
+      <div className="tool-row-2">
+        <div className="tool-field">
+          <label htmlFor="quiz-title">Quiz title</label>
+          <input
+            id="quiz-title"
+            placeholder="Enter a quiz title"
+            value={title}
+            onChange={event => {
+              setTitle(event.target.value)
+              setSuccess('')
+            }}
+            required
+          />
+        </div>
+
+        <div className="tool-field">
+          <label htmlFor="quiz-due-date">Due date</label>
+          <input
+            id="quiz-due-date"
+            type="date"
+            value={due}
+            onChange={event => {
+              setDue(event.target.value)
+              setSuccess('')
+            }}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="tool-questions">
+        <div className="tool-section-title">
+          <h3>Questions</h3>
+          <p>Add questions and select the correct answer for each one.</p>
+        </div>
+
+        {items.map((question, index) => (
+          <div
+            className="tool-question"
+            role="group"
+            aria-labelledby={`question-heading-${index}`}
+            key={index}
+          >
+            <div className="tool-question-head">
+              <span className="tool-question-number">{index + 1}</span>
+              <span id={`question-heading-${index}`}>Question {index + 1}</span>
+            </div>
+
+            <div className="tool-field">
+              <label htmlFor={`question-${index}`}>Question text</label>
+              <input
+                id={`question-${index}`}
+                placeholder="Enter your question"
+                value={question.text}
+                onChange={event => update(index, 'text', event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="tool-options">
+              {question.options.map((option, optionIndex) => (
+                <div className="tool-option" key={optionIndex}>
+                  <span
+                    className={`tool-letter${
+                      question.correct === optionIndex ? ' correct' : ''
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {'ABCD'[optionIndex]}
+                  </span>
+                  <input
+                    id={`question-${index}-option-${optionIndex}`}
+                    aria-label={`Option ${'ABCD'[optionIndex]}`}
+                    placeholder={`Option ${'ABCD'[optionIndex]}`}
+                    value={option}
+                    onChange={event =>
+                      updateOption(index, optionIndex, event.target.value)
+                    }
+                    required
+                  />
+                </div>
+              ))}
+            </div>
+
+                        <div
+              className="tool-correct"
+              role="radiogroup"
+              aria-labelledby={`correct-label-${index}`}
+            >
+              <span id={`correct-label-${index}`} className="tool-correct-label">
+                Correct answer
+              </span>
+
+              <div className="tool-segmented">
+                {question.options.map((_, optionIndex) => (
+                  <label
+                    key={optionIndex}
+                    className={`tool-segment${
+                      question.correct === optionIndex ? ' selected' : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`correct-${index}`}
+                      value={optionIndex}
+                      checked={question.correct === optionIndex}
+                      onChange={() => update(index, 'correct', optionIndex)}
+                    />
+                    {'ABCD'[optionIndex]}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {success && (
+        <p role="status" className="tool-message tool-message-success">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+          {success}
+        </p>
+      )}
+
+      <div className="tool-actions tool-actions-split">
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => {
+            setSuccess('')
+            setItems(old => [...old, blank()])
+          }}
+        >
+          + Add question
+        </button>
+
+        <button type="submit">Publish quiz</button>
+      </div>
+    </form>
+  )
 }
