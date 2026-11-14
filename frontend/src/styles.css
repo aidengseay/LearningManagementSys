@@ -2042,3 +2042,24 @@ label {
     text-align: center;
   }
 }
+
+
+/* CURRICULUM — match the existing course panel layout */
+.curriculum-section { display: flex; flex-direction: column; gap: 16px; }
+.curriculum-form { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+.curriculum-form h3 { margin: 0; }
+.curriculum-form button { align-self: flex-start; }
+.curriculum-modules { display: grid; gap: 12px; }
+.curriculum-module { border: 1px solid #dbe3eb; border-radius: 8px; overflow: hidden; background: #fff; }
+.curriculum-module-heading { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.curriculum-toggle { flex: 1; text-align: left; background: transparent; color: #1f2937; font-weight: 700; padding: 5px 0; }
+.curriculum-toggle:hover { background: transparent; color: #1d4ed8; }
+.curriculum-module-body { border-top: 1px solid #e2e8f0; padding: 14px 16px; display: grid; gap: 14px; }
+.curriculum-material { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid #eef2f7; padding-bottom: 12px; }
+.curriculum-material-content { flex: 1; min-width: 0; display: grid; gap: 8px; }
+.curriculum-material-content p { margin: 0; }
+.curriculum-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.curriculum-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.curriculum-actions button, .curriculum-material-content button { padding: 7px 10px; font-size: 13px; }
+.curriculum-material .curriculum-form { flex: 1; }
+@media (max-width: 600px) { .curriculum-module-heading, .curriculum-material { flex-direction: column; align-items: stretch; } }

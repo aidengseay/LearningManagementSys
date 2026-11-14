@@ -99,3 +99,25 @@ class CourseJoinCode(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     course_id: Mapped[int] = mapped_column(ForeignKey('courses.id'), unique=True, index=True)
     code: Mapped[str] = mapped_column(String(12), unique=True, index=True)
+
+# Curriculum modules and materials. PDF bytes are stored outside the database.
+class CurriculumModule(Base):
+    __tablename__ = 'curriculum_modules'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey('courses.id'), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default='')
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class CurriculumMaterial(Base):
+    __tablename__ = 'curriculum_materials'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    module_id: Mapped[int] = mapped_column(ForeignKey('curriculum_modules.id'), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    type: Mapped[str] = mapped_column(String(10))  # TEXT, LINK or PDF
+    content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_path: Mapped[str | None] = mapped_column(String(200), nullable=True)  # generated basename only
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

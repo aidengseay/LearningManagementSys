@@ -39,6 +39,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      CURRICULUM_UPLOAD_DIR: /app/uploads
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
 
@@ -51,6 +52,7 @@ services:
 
     volumes:
       - ./backend:/app:Z
+      - curriculum_uploads:/app/uploads
 
     depends_on:
       db:
@@ -75,3 +77,4 @@ services:
 
 volumes:
   postgres_data:
+  curriculum_uploads:

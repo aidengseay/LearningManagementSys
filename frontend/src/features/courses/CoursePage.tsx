@@ -5,6 +5,7 @@ import QuizList from '../quizzes/QuizList'
 import AnnouncementList from '../announcements/AnnouncementList'
 import InstructorCourseTools from './InstructorCourseTools'
 import InstructorTools from './InstructorTools'
+import CurriculumSection from '../curriculum/CurriculumSection'
 
 export default function CoursePage() {
   const { courseId } = useParams()
@@ -53,6 +54,8 @@ export default function CoursePage() {
       <div className="course-section-heading"><div><p className="course-eyebrow">ASSESSMENTS</p><h2>Quizzes and assignments</h2><p>View the assessments available in this course.</p></div></div>
       <QuizList courseId={course.id} refreshKey={quizVersion} />
     </section>
+
+    <CurriculumSection courseId={course.id} isInstructor={user.role === 'INSTRUCTOR'} />
 
     <section className="course-content-section panel">
       <div className="course-section-heading"><div><p className="course-eyebrow">COURSE UPDATES</p><h2>Announcements</h2><p>Stay up to date with the latest course information.</p></div></div>
