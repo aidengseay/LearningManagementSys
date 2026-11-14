@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import { useDemo } from '../demo/store'
+import { useAppStore } from '../app/store'
 
 export default function CreateCourseForm() {
-  const { createCourse } = useDemo()
+  const { createCourse } = useAppStore()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [busy, setBusy] = useState(false)

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useDemo, type Question } from '../demo/store'
+import { createQuizRequest } from '../../api/quizzes'
 
 const blank = () => ({
   text: '',
@@ -8,16 +8,18 @@ const blank = () => ({
 })
 
 export default function QuizCreator({
-  courseId
+  courseId,
+  onCreated
 }: {
   courseId: number
+  onCreated?: () => void
 }) {
-  const { createQuiz } = useDemo()
-
   const [title, setTitle] = useState('')
   const [due, setDue] = useState('')
   const [items, setItems] = useState([blank()])
   const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
   function update(
     index: number,
@@ -52,7 +54,7 @@ export default function QuizCreator({
     )
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault()
 
     if (
@@ -67,17 +69,20 @@ export default function QuizCreator({
       return
     }
 
-    const questions: Question[] = items.map((question, index) => ({
-      ...question,
-      id: Date.now() + index
-    }))
-
-    createQuiz(courseId, title.trim(), due, questions)
-
-    setTitle('')
-    setDue('')
-    setItems([blank()])
-    setSuccess('Quiz published. Students can now see it in this course.')
+    setBusy(true)
+    setError('')
+    try {
+      await createQuizRequest(courseId, title.trim(), due, items)
+      setTitle('')
+      setDue('')
+      setItems([blank()])
+      setSuccess('Quiz published. Students can now see it in this course.')
+      onCreated?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to publish quiz')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -245,6 +250,8 @@ export default function QuizCreator({
         </p>
       )}
 
+      {error && <p role="alert" className="tool-message error">{error}</p>}
+
       <div className="tool-actions tool-actions-split">
         <button
           type="button"
@@ -257,7 +264,9 @@ export default function QuizCreator({
           + Add question
         </button>
 
-        <button type="submit">Publish quiz</button>
+        <button type="submit" disabled={busy}>
+          {busy ? 'Publishing...' : 'Publish quiz'}
+        </button>
       </div>
     </form>
   )

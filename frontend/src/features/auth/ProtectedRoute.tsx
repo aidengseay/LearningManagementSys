@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router'
 import { useAuth } from './AuthContext'
-import type { Role } from '../demo/store'
+import type { Role } from '../../api/types'
 export default function ProtectedRoute({ role }: { role?: Role }) {
   const { user, loading } = useAuth()
   if (loading) return <p>Loading your account…</p>

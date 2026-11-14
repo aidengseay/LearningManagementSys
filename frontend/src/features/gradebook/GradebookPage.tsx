@@ -1,13 +1,36 @@
 
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { useDemo } from '../demo/store'
+import { getGradebook, getMyGrades } from '../../api/quizzes'
+import type { StudentGrades } from '../../api/types'
+import { useAppStore } from '../app/store'
 import GradesTable from './GradesTable'
 
 export default function GradebookPage() {
   const { courseId } = useParams()
-  const { user, courses, quizzes, submissions } = useDemo()
+  const { user, courses } = useAppStore()
+  const [reports, setReports] = useState<StudentGrades[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const course = courses.find(c => c.id === Number(courseId))
+
+  useEffect(() => {
+    let active = true
+    const id = Number(courseId)
+    if (!user || !Number.isInteger(id)) {
+      setLoading(false)
+      return
+    }
+    const request = user.role === 'STUDENT'
+      ? getMyGrades(id).then(report => [report])
+      : getGradebook(id).then(gradebook => gradebook.students)
+    request
+      .then(data => { if (active) setReports(data) })
+      .catch(err => { if (active) setError(err instanceof Error ? err.message : 'Unable to load grades') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [courseId, user])
 
   if (
     !course ||
@@ -28,8 +51,6 @@ export default function GradebookPage() {
     )
   }
 
-  const courseQuizzes = quizzes.filter(q => q.courseId === course.id)
-
   return (
     <div className="gradebook-page stack">
       <section className="gradebook-hero">
@@ -48,7 +69,11 @@ export default function GradebookPage() {
         </Link>
       </section>
 
-      {user.role === 'STUDENT' ? (
+      {loading ? (
+        <section className="panel"><p>Loading grades…</p></section>
+      ) : error ? (
+        <section className="panel"><p role="alert" className="error">{error}</p></section>
+      ) : user.role === 'STUDENT' ? (
         <section className="gradebook-student-section panel">
           <div className="course-section-heading">
             <div>
@@ -58,10 +83,7 @@ export default function GradebookPage() {
             </div>
           </div>
 
-          <GradesTable
-            quizzes={courseQuizzes}
-            submissions={submissions.filter(s => s.studentId === user.id)}
-          />
+          <GradesTable grades={reports[0]?.grades ?? []} />
         </section>
       ) : (
         <section className="gradebook-instructor-section">
@@ -73,21 +95,19 @@ export default function GradebookPage() {
             </div>
           </div>
 
-          {course.studentIds.length > 0 ? (
+          {reports.length > 0 ? (
             <div className="gradebook-student-list">
-              {course.studentIds.map(id => (
-                <section key={id} className="gradebook-student-card panel">
+              {reports.map(report => (
+                <section key={report.studentId} className="gradebook-student-card panel">
                   <div className="gradebook-student-heading">
                     <div>
                       <p className="course-eyebrow">STUDENT REPORT</p>
-                      <h3>Student #{id}</h3>
+                      <h3>{report.studentName}</h3>
+                      <p>{report.studentEmail}</p>
                     </div>
                   </div>
 
-                  <GradesTable
-                    quizzes={courseQuizzes}
-                    submissions={submissions.filter(s => s.studentId === id)}
-                  />
+                  <GradesTable grades={report.grades} />
                 </section>
               ))}
             </div>

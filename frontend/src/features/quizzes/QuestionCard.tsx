@@ -1,4 +1,4 @@
-import type { Question } from '../demo/store'
+import type { Question } from '../../api/types'
 
 type Props = {
   question: Question

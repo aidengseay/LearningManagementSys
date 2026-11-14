@@ -1,27 +1,37 @@
 import { useState, type FormEvent } from 'react'
-import { useDemo } from '../demo/store'
+import { createAnnouncementRequest } from '../../api/announcements'
 
 export default function AnnouncementForm({
-  courseId
+  courseId,
+  onCreated
 }: {
   courseId: number
+  onCreated?: () => void
 }) {
-  const { postAnnouncement } = useDemo()
-
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault()
 
     if (!title.trim() || !content.trim()) return
 
-    postAnnouncement(courseId, title.trim(), content.trim())
-
-    setTitle('')
-    setContent('')
-    setSuccess('Announcement published. Students can see it on the course page.')
+    setBusy(true)
+    setError('')
+    try {
+      await createAnnouncementRequest(courseId, title.trim(), content.trim())
+      setTitle('')
+      setContent('')
+      setSuccess('Announcement published. Students can see it on the course page.')
+      onCreated?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to publish announcement')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -100,8 +110,12 @@ export default function AnnouncementForm({
         </p>
       )}
 
+      {error && <p role="alert" className="tool-message error">{error}</p>}
+
       <div className="tool-actions">
-        <button type="submit">Publish announcement</button>
+        <button type="submit" disabled={busy}>
+          {busy ? 'Publishing...' : 'Publish announcement'}
+        </button>
       </div>
     </form>
   )

@@ -1,6 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
-import { useDemo } from '../demo/store'
+import { getQuiz, getSubmission, submitQuizRequest } from '../../api/quizzes'
+import type { QuizDetail, Submission } from '../../api/types'
+import { useAppStore } from '../app/store'
 import QuestionCard from './QuestionCard'
 
 function formatDue(due: string) {
@@ -16,22 +18,43 @@ function formatDue(due: string) {
 
 export default function QuizPage() {
   const { quizId } = useParams()
-  const { user, quizzes, courses, submissions, submitQuiz } = useDemo()
+  const { user, courses } = useAppStore()
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [error, setError] = useState('')
+  const [quiz, setQuiz] = useState<QuizDetail | null>(null)
+  const [previous, setPrevious] = useState<Submission | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
 
-  const quiz = quizzes.find(q => q.id === Number(quizId))
   const course = quiz && courses.find(c => c.id === quiz.courseId)
-  const previous = submissions.find(
-    s => s.quizId === quiz?.id && s.studentId === user?.id
-  )
+
+  useEffect(() => {
+    let active = true
+    const id = Number(quizId)
+    if (!Number.isInteger(id)) {
+      setLoading(false)
+      return
+    }
+    Promise.all([getQuiz(id), getSubmission(id)])
+      .then(([detail, submission]) => {
+        if (active) {
+          setQuiz(detail)
+          setPrevious(submission)
+        }
+      })
+      .catch(err => { if (active) setError(err instanceof Error ? err.message : 'Unable to load quiz') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [quizId])
+
+  if (loading) return <p>Loading quiz…</p>
 
   if (!quiz || !course || user?.role !== 'STUDENT' || !course.studentIds.includes(user.id)) {
     return (
       <div className="take-page">
         <section className="take-unavailable">
           <h2>Quiz unavailable</h2>
-          <p>This quiz could not be found or you do not have access to it.</p>
+          <p>{error || 'This quiz could not be found or you do not have access to it.'}</p>
           <Link to="/student" className="take-back">
             ← Back to dashboard
           </Link>
@@ -40,13 +63,17 @@ export default function QuizPage() {
     )
   }
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault()
+    setBusy(true)
     try {
-      submitQuiz(quiz!.id, quiz!.questions.map(q => answers[q.id]))
+      const submission = await submitQuizRequest(quiz!.id, answers)
+      setPrevious(submission)
       setError('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Submission failed')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -121,8 +148,8 @@ export default function QuizPage() {
               </div>
             </div>
 
-            <button type="submit" disabled={answered !== total}>
-              Submit quiz
+            <button type="submit" disabled={answered !== total || busy}>
+              {busy ? 'Submitting...' : 'Submit quiz'}
             </button>
           </div>
         </form>

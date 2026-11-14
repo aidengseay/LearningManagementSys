@@ -1,14 +1,12 @@
 
-import type { Quiz, Submission } from '../demo/store'
+import type { GradeEntry } from '../../api/types'
 
 export default function GradesTable({
-  quizzes,
-  submissions
+  grades
 }: {
-  quizzes: Quiz[]
-  submissions: Submission[]
+  grades: GradeEntry[]
 }) {
-  if (quizzes.length === 0) {
+  if (grades.length === 0) {
     return (
       <div className="grades-empty">
         <p>No assessments have been created for this course yet.</p>
@@ -28,26 +26,20 @@ export default function GradesTable({
         </thead>
 
         <tbody>
-          {quizzes.map(quiz => {
-            const submission = submissions.find(s => s.quizId === quiz.id)
-
-            const percentage = submission && submission.total > 0
-              ? Math.round((submission.score / submission.total) * 100)
-              : null
-
+          {grades.map(grade => {
             return (
-              <tr key={quiz.id}>
-                <td className="grades-assessment-name">{quiz.title}</td>
+              <tr key={grade.quizId}>
+                <td className="grades-assessment-name">{grade.quizTitle}</td>
 
                 <td>
-                  {submission
-                    ? `${submission.score}/${submission.total}`
+                  {grade.score !== null
+                    ? `${grade.score}/${grade.total}`
                     : <span className="grades-not-submitted">Not submitted</span>}
                 </td>
 
                 <td>
-                  {percentage !== null ? (
-                    <span className="grades-percentage">{percentage}%</span>
+                  {grade.percentage !== null ? (
+                    <span className="grades-percentage">{Math.round(grade.percentage)}%</span>
                   ) : (
                     <span className="grades-no-grade">—</span>
                   )}
