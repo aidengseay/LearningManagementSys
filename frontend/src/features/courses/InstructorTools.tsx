@@ -1,11 +1,13 @@
 import { useState, type KeyboardEvent } from 'react'
 import EnrollStudentForm from './EnrollStudentForm'
 import QuizCreator from '../quizzes/QuizCreator'
+import AssignmentCreator from '../assignments/AssignmentCreator'
 import AnnouncementForm from '../announcements/AnnouncementForm'
 
 const TOOLS = [
   { id: 'enroll', label: 'Student enrollment' },
-  { id: 'quiz', label: 'Create an assessment' },
+  { id: 'quiz', label: 'Create a quiz' },
+  { id: 'assignment', label: 'Create an assignment' },
   { id: 'announce', label: 'Post an announcement' }
 ] as const
 
@@ -14,10 +16,12 @@ type ToolId = (typeof TOOLS)[number]['id']
 export default function InstructorTools({
   courseId,
   onQuizCreated,
+  onAssignmentCreated,
   onAnnouncementCreated
 }: {
   courseId: number
   onQuizCreated?: () => void
+  onAssignmentCreated?: () => void
   onAnnouncementCreated?: () => void
 }) {
   const [activeTool, setActiveTool] = useState<ToolId>('enroll')
@@ -85,6 +89,10 @@ export default function InstructorTools({
         <QuizCreator courseId={courseId} onCreated={onQuizCreated} />
       </div>
 
+      <div role="tabpanel" id="tool-panel-assignment" aria-labelledby="tool-tab-assignment"
+        className="instructor-tab-panel" hidden={activeTool !== 'assignment'}>
+        <AssignmentCreator courseId={courseId} onCreated={onAssignmentCreated} />
+      </div>
       <div
         role="tabpanel"
         id="tool-panel-announce"

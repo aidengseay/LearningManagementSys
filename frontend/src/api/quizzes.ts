@@ -20,10 +20,11 @@ export const createQuizRequest = (
   courseId: number,
   title: string,
   due: string,
-  questions: QuestionInput[]
+  questions: QuestionInput[],
+  maxPoints?: number
 ) => api<QuizDetail>(`/courses/${courseId}/quizzes`, {
   method: 'POST',
-  body: JSON.stringify({ title, due, questions })
+  body: JSON.stringify({ title, due, questions, maxPoints })
 })
 
 export const getSubmission = (quizId: number) =>

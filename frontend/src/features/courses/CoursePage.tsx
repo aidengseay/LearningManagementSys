@@ -6,11 +6,13 @@ import AnnouncementList from '../announcements/AnnouncementList'
 import InstructorCourseTools from './InstructorCourseTools'
 import InstructorTools from './InstructorTools'
 import CurriculumSection from '../curriculum/CurriculumSection'
+import AssignmentList from '../assignments/AssignmentList'
 
 export default function CoursePage() {
   const { courseId } = useParams()
   const { user, courses } = useAppStore()
   const [quizVersion, setQuizVersion] = useState(0)
+  const [assignmentVersion, setAssignmentVersion] = useState(0)
   const [announcementVersion, setAnnouncementVersion] = useState(0)
   const course = courses.find(c => c.id === Number(courseId))
 
@@ -45,14 +47,16 @@ export default function CoursePage() {
         <InstructorTools
           courseId={course.id}
           onQuizCreated={() => setQuizVersion(value => value + 1)}
+          onAssignmentCreated={() => setAssignmentVersion(value => value + 1)}
           onAnnouncementCreated={() => setAnnouncementVersion(value => value + 1)}
         />
       </section>
     </>}
 
     <section className="course-content-section panel">
-      <div className="course-section-heading"><div><p className="course-eyebrow">ASSESSMENTS</p><h2>Quizzes</h2><p>View the assessments available in this course.</p></div></div>
+      <div className="course-section-heading"><div><p className="course-eyebrow">ASSESSMENTS</p><h2>Quizzes and assignments</h2><p>View the assessments available in this course.</p></div></div>
       <QuizList courseId={course.id} refreshKey={quizVersion} />
+      <AssignmentList courseId={course.id} refreshKey={assignmentVersion} />
     </section>
 
     <CurriculumSection courseId={course.id} isInstructor={user.role === 'INSTRUCTOR'} />

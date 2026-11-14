@@ -33,6 +33,7 @@ class QuizCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     due: date
     questions: list[QuestionCreate] = Field(min_length=1)
+    maxPoints: int | None = Field(default=None, gt=0)
 
     @model_validator(mode='after')
     def nonempty(self):
@@ -57,6 +58,7 @@ class QuizListItem(BaseModel):
     title: str
     due: date
     questionCount: int
+    maxPoints: int
     submitted: bool | None = None
     score: int | None = None
     total: int | None = None
@@ -68,6 +70,7 @@ class QuizStudentDetail(BaseModel):
     title: str
     due: date
     questions: list[QuestionPublic]
+    maxPoints: int
 
 
 class QuizInstructorDetail(BaseModel):
@@ -76,6 +79,7 @@ class QuizInstructorDetail(BaseModel):
     title: str
     due: date
     questions: list[QuestionInstructor]
+    maxPoints: int
 
 
 class SubmitBody(BaseModel):
@@ -179,7 +183,8 @@ def _submission_out(sub: QuizSubmission, db: Session) -> SubmissionOut:
 def create_quiz(course_id: int, body: QuizCreate,
                 instructor: User = Depends(require_instructor), db: Session = Depends(get_db)):
     _course(course_id, instructor, db)
-    quiz = Quiz(course_id=course_id, title=body.title.strip(), due_date=body.due)
+    quiz = Quiz(course_id=course_id, title=body.title.strip(), due_date=body.due,
+                max_points=body.maxPoints or len(body.questions))
     db.add(quiz)
     db.flush()
     for position, data in enumerate(body.questions):
@@ -202,7 +207,7 @@ def list_quizzes(course_id: int, user: User = Depends(current_user), db: Session
             QuizSubmission.quiz_id == quiz.id, QuizSubmission.student_id == user.id))
             if user.role == 'STUDENT' else None)
         result.append(QuizListItem(id=quiz.id, courseId=course_id, title=quiz.title,
-                                   due=quiz.due_date, questionCount=total,
+                                   due=quiz.due_date, questionCount=total, maxPoints=quiz.max_points or total,
                                    submitted=(sub is not None) if user.role == 'STUDENT' else None,
                                    score=sub.score if sub else None, total=sub.total if sub else None))
     return result
@@ -213,7 +218,7 @@ def get_quiz(quiz_id: int, user: User = Depends(current_user), db: Session = Dep
     quiz = _quiz(quiz_id, user, db)
     instructor = user.role == 'INSTRUCTOR'
     payload = {'id': quiz.id, 'courseId': quiz.course_id, 'title': quiz.title,
-               'due': quiz.due_date,
+               'due': quiz.due_date, 'maxPoints': quiz.max_points or len(_questions(quiz.id, db)),
                'questions': [_public_question(q, instructor) for q in _questions(quiz.id, db)]}
     return QuizInstructorDetail(**payload) if instructor else QuizStudentDetail(**payload)
 
