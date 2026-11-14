@@ -16,6 +16,7 @@ export default function QuizCreator({
 }) {
   const [title, setTitle] = useState('')
   const [due, setDue] = useState('')
+  const [maxPoints, setMaxPoints] = useState(10)
   const [items, setItems] = useState([blank()])
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
@@ -144,6 +145,9 @@ export default function QuizCreator({
         </div>
       </div>
 
+      <div className="tool-field"><label htmlFor="quiz-max-points">Maximum quiz points</label>
+        <input id="quiz-max-points" type="number" min={1} value={maxPoints} onChange={e => setMaxPoints(Number(e.target.value))} required />
+      </div>
       <div className="tool-questions">
         <div className="tool-section-title">
           <h3>Questions</h3>

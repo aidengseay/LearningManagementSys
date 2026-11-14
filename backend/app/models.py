@@ -38,6 +38,7 @@ class Quiz(Base):
     course_id: Mapped[int] = mapped_column(ForeignKey('courses.id'), index=True)
     title: Mapped[str] = mapped_column(String(200))
     due_date: Mapped[date] = mapped_column(Date)
+    max_points: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class Question(Base):
@@ -121,3 +122,41 @@ class CurriculumMaterial(Base):
     position: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+# Instructor-graded assessments. A submission row may exist without submitted work
+# when an instructor records a grade for a missing assignment.
+class Assignment(Base):
+    __tablename__ = 'assignments'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey('courses.id'), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default='')
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    max_points: Mapped[int] = mapped_column(Integer)
+    submission_type: Mapped[str] = mapped_column(String(10))  # TEXT, PDF or BOTH
+    instructions_file: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    instructions_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    __table_args__ = (
+        CheckConstraint('max_points > 0', name='assignment_positive_points'),
+        CheckConstraint("submission_type IN ('TEXT','PDF','BOTH')", name='assignment_valid_type'),
+    )
+
+
+class AssignmentSubmission(Base):
+    __tablename__ = 'assignment_submissions'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    assignment_id: Mapped[int] = mapped_column(ForeignKey('assignments.id'), index=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
+    submission_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_path: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    original_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    points_earned: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    feedback: Mapped[str] = mapped_column(Text, default='')
+    graded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    graded_by: Mapped[int | None] = mapped_column(ForeignKey('users.id'), nullable=True)
+    __table_args__ = (
+        UniqueConstraint('assignment_id', 'student_id'),
+        CheckConstraint('points_earned IS NULL OR points_earned >= 0', name='submission_nonnegative_grade'),
+    )
