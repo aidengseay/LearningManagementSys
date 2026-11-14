@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.auth import current_user, get_db, make_token, require_instructor, verify_password
 from app.database import Base, check_database, engine
 from app.models import Course, Enrollment, User  # registers models before create_all
+from app.quizzes import router as quiz_router
+from app.announcements import router as announcement_router
 from app.seed import seed_demo_data
 
 
@@ -20,7 +22,9 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title='Learning Management System', version='0.2.0', lifespan=lifespan)
+app = FastAPI(title='Learning Management System', version='0.3.0', lifespan=lifespan)
+app.include_router(quiz_router)
+app.include_router(announcement_router)
 
 
 def normalized_email(value: str) -> str:
