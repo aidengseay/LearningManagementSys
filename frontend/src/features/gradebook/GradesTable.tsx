@@ -1,4 +1,3 @@
-
 import type { GradeEntry } from '../../api/types'
 
 export default function GradesTable({
@@ -8,15 +7,15 @@ export default function GradesTable({
 }) {
   if (grades.length === 0) {
     return (
-      <div className="grades-empty">
+      <div className="gb-state">
         <p>No assessments have been created for this course yet.</p>
       </div>
     )
   }
 
   return (
-    <div className="grades-table-wrap">
-      <table className="grades-table">
+    <div className="gb-table-wrap">
+      <table className="gb-table">
         <thead>
           <tr>
             <th>Assessment</th>
@@ -29,19 +28,21 @@ export default function GradesTable({
           {grades.map(grade => {
             return (
               <tr key={grade.quizId}>
-                <td className="grades-assessment-name">{grade.quizTitle}</td>
-
                 <td>
+                  <strong className="gb-assessment-name">{grade.quizTitle}</strong>
+                </td>
+
+                <td className="gb-num">
                   {grade.score !== null
                     ? `${grade.score}/${grade.total}`
-                    : <span className="grades-not-submitted">Not submitted</span>}
+                    : <span className="gb-chip bad">Not submitted</span>}
                 </td>
 
                 <td>
                   {grade.percentage !== null ? (
-                    <span className="grades-percentage">{Math.round(grade.percentage)}%</span>
+                    <span className="gb-grade">{Math.round(grade.percentage)}%</span>
                   ) : (
-                    <span className="grades-no-grade">—</span>
+                    <span className="gb-dash">—</span>
                   )}
                 </td>
               </tr>
