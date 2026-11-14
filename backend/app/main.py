@@ -15,11 +15,14 @@ from app.models import Course, CourseJoinCode, Enrollment, User  # registers mod
 from app.quizzes import router as quiz_router
 from app.announcements import router as announcement_router
 from app.curriculum import router as curriculum_router
+from app.assignments import router as assignments_router
+from app.grading import router as grading_router, migrate_quiz_points
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Development-only table creation; use Alembic migrations later.
+    migrate_quiz_points(engine)
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -28,6 +31,8 @@ app = FastAPI(title='Learning Management System', version='0.4.0', lifespan=life
 app.include_router(quiz_router)
 app.include_router(announcement_router)
 app.include_router(curriculum_router)
+app.include_router(assignments_router)
+app.include_router(grading_router)
 
 
 def normalized_email(value: str) -> str:
