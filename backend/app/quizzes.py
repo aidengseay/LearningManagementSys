@@ -188,9 +188,9 @@ def create_quiz(course_id: int, body: QuizCreate,
     db.add(quiz)
     db.flush()
     for position, data in enumerate(body.questions):
-        db.add(Question(quiz_id=quiz.id, position=position, text=data.text.strip(),
-                        option_a=data.options[0].strip(), option_b=data.options[1].strip(),
-                        option_c=data.options[2].strip(), option_d=data.options[3].strip(),
+        db.add(Question(quiz_id=quiz.id, position=position, text=data.text,
+                        option_a=data.options[0], option_b=data.options[1],
+                        option_c=data.options[2], option_d=data.options[3],
                         correct=data.correct))
     db.commit()
     return get_quiz(quiz.id, instructor, db)

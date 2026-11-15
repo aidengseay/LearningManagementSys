@@ -54,12 +54,20 @@ class MaterialCreate(BaseModel):
     type: Literal['TEXT', 'LINK']
     content: str = Field(min_length=1, max_length=50000)
 
-    @field_validator('title', 'content')
+    @field_validator('title')
     @classmethod
-    def not_blank(cls, value: str) -> str:
+    def valid_title(cls, value: str) -> str:
         if not value.strip():
-            raise ValueError('Value cannot be blank')
+            raise ValueError('Title cannot be blank')
         return value.strip()
+
+    @field_validator('content')
+    @classmethod
+    def valid_content(cls, value: str, info) -> str:
+        if not value.strip():
+            raise ValueError('Content cannot be blank')
+        # Keep author-entered whitespace for text lessons, normalize URL fields.
+        return value.strip() if info.data.get('type') == 'LINK' else value
 
 
 class MaterialUpdate(BaseModel):
@@ -67,12 +75,19 @@ class MaterialUpdate(BaseModel):
     content: str | None = Field(default=None, min_length=1, max_length=50000)
     position: int | None = Field(default=None, ge=0)
 
-    @field_validator('title', 'content')
+    @field_validator('title')
     @classmethod
-    def not_blank(cls, value: str | None) -> str | None:
+    def valid_title(cls, value: str | None) -> str | None:
         if value is not None and not value.strip():
-            raise ValueError('Value cannot be blank')
+            raise ValueError('Title cannot be blank')
         return value.strip() if value is not None else None
+
+    @field_validator('content')
+    @classmethod
+    def valid_content(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError('Content cannot be blank')
+        return value
 
 
 class MaterialOut(BaseModel):

@@ -1,4 +1,5 @@
 import type { Question } from '../../api/types'
+import MarkdownText from '../../components/MarkdownText'
 
 type Props = {
   question: Question
@@ -14,7 +15,7 @@ export default function QuestionCard({ question, number, selected, onChange }: P
     <div className="take-card" role="radiogroup" aria-labelledby={headingId}>
       <div className="take-card-head">
         <span className="take-number">{number}</span>
-        <h3 id={headingId}>{question.text}</h3>
+        <div id={headingId} className="take-question-text"><MarkdownText text={question.text} /></div>
       </div>
 
       <div className="take-choices">
@@ -32,7 +33,7 @@ export default function QuestionCard({ question, number, selected, onChange }: P
             <span className="take-letter" aria-hidden="true">
               {'ABCD'[index]}
             </span>
-            <span className="take-choice-text">{option}</span>
+            <MarkdownText className="take-choice-text" text={option} />
           </label>
         ))}
       </div>

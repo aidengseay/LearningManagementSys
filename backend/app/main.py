@@ -94,6 +94,19 @@ class CourseBody(BaseModel):
     description: str = ''
 
 
+class CourseUpdateBody(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+    description: str = Field(default='', max_length=10000)
+
+    @field_validator('name')
+    @classmethod
+    def nonblank_course_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('Course name cannot be blank')
+        return value
+
+
 class CourseOut(BaseModel):
     id: int
     name: str
@@ -224,6 +237,17 @@ def create_course(body: CourseBody, instructor: User = Depends(require_instructo
 @app.get('/api/courses/{course_id}', response_model=CourseOut)
 def get_course(course_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     return visible_course(get_authorized_course(course_id, user, db), db)
+
+
+@app.patch('/api/courses/{course_id}', response_model=CourseOut)
+def update_course(course_id: int, body: CourseUpdateBody,
+                  instructor: User = Depends(require_instructor), db: Session = Depends(get_db)):
+    course = get_authorized_course(course_id, instructor, db)
+    course.name = body.name
+    course.description = body.description
+    db.commit()
+    db.refresh(course)
+    return visible_course(course, db)
 
 
 @app.post('/api/courses/{course_id}/enrollments', response_model=CourseOut)

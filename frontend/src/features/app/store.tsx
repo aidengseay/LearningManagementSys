@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { clearToken, getToken, saveToken } from '../../api/client'
 import { getMe, loginRequest, registerRequest, type RegisterInput } from '../../api/auth'
-import { createCourseRequest, enrollStudentRequest, getCourses, joinCourseRequest } from '../../api/courses'
+import { createCourseRequest, enrollStudentRequest, getCourses, joinCourseRequest, updateCourseRequest } from '../../api/courses'
 import type { Course, User } from '../../api/types'
 
 type Store = {
@@ -14,6 +14,7 @@ type Store = {
   logout: () => void
   refreshCourses: () => Promise<void>
   createCourse: (name: string, description: string) => Promise<void>
+  updateCourse: (courseId: number, name: string, description: string) => Promise<void>
   enrollStudent: (courseId: number, email: string) => Promise<void>
 }
 
@@ -90,6 +91,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await createCourseRequest(name, description)
     await refreshCourses()
   }
+  const updateCourse = async (courseId: number, name: string, description: string) => {
+    const updated = await updateCourseRequest(courseId, name, description)
+    setCourses(previous => previous.map(course => course.id === updated.id ? updated : course))
+  }
   const enrollStudent = async (courseId: number, email: string) => {
     await enrollStudentRequest(courseId, email)
     await refreshCourses()
@@ -100,7 +105,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Context.Provider value={{ user, courses, loading, login, register, joinCourse, logout, refreshCourses, createCourse, enrollStudent }}>
+    <Context.Provider value={{ user, courses, loading, login, register, joinCourse, logout, refreshCourses, createCourse, updateCourse, enrollStudent }}>
       {children}
     </Context.Provider>
   )
