@@ -75,3 +75,20 @@ def test_enroll_student_and_idempotency(client, scenario, auth, db):
     assert client.post(path, json={'email': 'missing@demo.test'}, headers=headers).status_code == 404
     assert client.post(path, json={'email': 'student1@demo.test'},
                        headers=auth('two@demo.test')).status_code == 403
+
+
+def test_course_edit_requires_ownership_and_persists(client, scenario, auth, db):
+    cid = scenario['course_id']
+    path = f'/api/courses/{cid}'
+    payload = {'name': '  Advanced Networks  ', 'description': 'Updated course description.'}
+    assert client.patch(path, json=payload).status_code == 401
+    assert client.patch(path, json=payload, headers=auth('student1@demo.test')).status_code == 403
+    assert client.patch(path, json=payload, headers=auth('two@demo.test')).status_code == 403
+    response = client.patch(path, json=payload, headers=auth('one@demo.test'))
+    assert response.status_code == 200, response.text
+    assert response.json()['name'] == 'Advanced Networks'
+    assert response.json()['description'] == 'Updated course description.'
+    assert client.get(path, headers=auth('student1@demo.test')).json()['name'] == 'Advanced Networks'
+    invalid = client.patch(path, json={'name': '   ', 'description': 'bad'}, headers=auth('one@demo.test'))
+    assert invalid.status_code == 422
+    assert client.get(path, headers=auth('one@demo.test')).json()['description'] == 'Updated course description.'

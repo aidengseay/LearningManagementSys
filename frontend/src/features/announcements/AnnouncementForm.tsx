@@ -22,7 +22,7 @@ export default function AnnouncementForm({
     setBusy(true)
     setError('')
     try {
-      await createAnnouncementRequest(courseId, title.trim(), content.trim())
+      await createAnnouncementRequest(courseId, title.trim(), content)
       setTitle('')
       setContent('')
       setSuccess('Announcement published. Students can see it on the course page.')

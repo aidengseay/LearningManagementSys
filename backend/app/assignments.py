@@ -72,7 +72,7 @@ class TextBody(BaseModel):
     def nonblank(cls, value: str):
         if not value.strip():
             raise ValueError('Submission text cannot be blank')
-        return value.strip()
+        return value
 
 
 class GradeBody(BaseModel):

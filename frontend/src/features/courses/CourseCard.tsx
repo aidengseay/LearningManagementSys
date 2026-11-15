@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import MarkdownText from '../../components/MarkdownText'
 
 interface CourseCardProps {
   course: {
@@ -17,9 +18,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         <span className="course-card-arrow" aria-hidden="true">↗</span>
       </div>
       <h3>{course.name}</h3>
-      <p className="course-card-description">
-        {course.description || 'Open this course to view its materials and activities.'}
-      </p>
+      <MarkdownText className="course-card-description" text={course.description || 'Open this course to view its materials and activities.'} />
       <div className="course-card-footer">
         {typeof course.studentIds?.length === 'number' && (
           <span>{course.studentIds.length} {course.studentIds.length === 1 ? 'student' : 'students'}</span>

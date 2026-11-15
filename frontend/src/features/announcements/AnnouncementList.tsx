@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getAnnouncements } from '../../api/announcements'
 import type { Announcement } from '../../api/types'
+import MarkdownText from '../../components/MarkdownText'
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -60,7 +61,7 @@ export default function AnnouncementList({ courseId, refreshKey = 0 }: { courseI
               <h3>{a.title}</h3>
               <span className="ann-date">{formatDate(a.createdAt)}</span>
             </div>
-            <p className="ann-content">{a.content}</p>
+            <MarkdownText className="ann-content" text={a.content} />
           </div>
         </article>
       ))}

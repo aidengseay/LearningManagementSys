@@ -81,7 +81,7 @@ def create_announcement(
 ):
     authorized_course(course_id, instructor, db)
     title = body.title.strip()
-    content = body.content.strip()
+    content = body.content
     if not title or not content:
         raise HTTPException(status_code=422, detail='Title and content cannot be blank')
     announcement = Announcement(course_id=course_id, title=title, content=content)
