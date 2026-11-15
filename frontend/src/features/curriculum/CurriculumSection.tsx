@@ -4,6 +4,7 @@ import {
   getCurriculum, removeMaterial, removeModule, reorderModules, reorderMaterials, uploadPdf,
   type CurriculumMaterial, type CurriculumModule,
 } from '../../api/curriculum'
+import MarkdownText from '../../components/MarkdownText'
 
 type MaterialType = 'TEXT' | 'LINK' | 'PDF'
 
@@ -131,7 +132,7 @@ export default function CurriculumSection({ courseId, isInstructor }: { courseId
   async function addModule(event: FormEvent) {
     event.preventDefault()
     await run(async () => {
-      const created = await createModule(courseId, title.trim(), description.trim())
+      const created = await createModule(courseId, title.trim(), description)
       setTitle(''); setDescription(''); setExpanded(current => [...current, created.id])
     })
   }
@@ -142,7 +143,7 @@ export default function CurriculumSection({ courseId, isInstructor }: { courseId
         if (!file) throw new Error('Choose a PDF file')
         await uploadPdf(moduleId, materialTitle.trim(), file)
       } else {
-        await createMaterial(moduleId, materialTitle.trim(), materialType, materialContent.trim())
+        await createMaterial(moduleId, materialTitle.trim(), materialType, materialType === 'LINK' ? materialContent.trim() : materialContent)
       }
       setAddingTo(null); setMaterialTitle(''); setMaterialContent(''); setFile(null)
     })
@@ -180,7 +181,7 @@ export default function CurriculumSection({ courseId, isInstructor }: { courseId
     await run(async () => {
       await editMaterial(material.id, {
         title: editTitle.trim(),
-        ...(material.type !== 'PDF' ? { content: editContent.trim() } : {}),
+        ...(material.type !== 'PDF' ? { content: material.type === 'LINK' ? editContent.trim() : editContent } : {}),
       })
       setEditing(null)
     })
@@ -285,7 +286,7 @@ export default function CurriculumSection({ courseId, isInstructor }: { courseId
 
                 {open && (
                   <div className="cur-module-body" id={`module-body-${module.id}`}>
-                    {module.description && <p className="cur-desc">{module.description}</p>}
+                    {module.description && <MarkdownText className="cur-desc" text={module.description} />}
                     {count === 0 && <p className="cur-none">No materials in this module.</p>}
 
                     {module.materials.map((material, materialIndex) => (
@@ -325,7 +326,7 @@ export default function CurriculumSection({ courseId, isInstructor }: { courseId
                                 <span className="cur-tag">{TYPE_LABEL[material.type]}</span>
                               </div>
 
-                              {material.type === 'TEXT' && <p className="cur-text">{material.content}</p>}
+                              {material.type === 'TEXT' && <MarkdownText className="cur-text" text={material.content} />}
                               {material.type === 'LINK' && material.content && (
                                 <a className="cur-btn cur-link" href={material.content} target="_blank" rel="noopener noreferrer">
                                   Open resource <ExternalIcon />

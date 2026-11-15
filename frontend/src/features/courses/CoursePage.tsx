@@ -7,10 +7,13 @@ import InstructorCourseTools from './InstructorCourseTools'
 import InstructorTools from './InstructorTools'
 import CurriculumSection from '../curriculum/CurriculumSection'
 import AssignmentList from '../assignments/AssignmentList'
+import EditCourseModal from './EditCourseModal'
+import MarkdownText from '../../components/MarkdownText'
 
 export default function CoursePage() {
   const { courseId } = useParams()
-  const { user, courses } = useAppStore()
+  const { user, courses, updateCourse } = useAppStore()
+  const [editOpen, setEditOpen] = useState(false)
   const [quizVersion, setQuizVersion] = useState(0)
   const [assignmentVersion, setAssignmentVersion] = useState(0)
   const [announcementVersion, setAnnouncementVersion] = useState(0)
@@ -33,12 +36,22 @@ export default function CoursePage() {
     <section className="dashboard-hero"><div className="dashboard-hero-content">
       <span className="dashboard-eyebrow">2 ½ LMS · COURSE</span>
       <h1>{course.name}</h1>
-      <p>{course.description || 'Welcome to your course. Check below for assessments and announcements.'}</p>
+      <MarkdownText className="course-hero-description" text={course.description || 'Welcome to your course. Check below for assessments and announcements.'} />
       <div className="course-hero-actions">
         <Link to={`/courses/${course.id}/grades`} className="course-primary-button">View gradebook</Link>
+        {user.role === 'INSTRUCTOR' && (
+          <button type="button" className="course-secondary-button course-edit-trigger" onClick={() => setEditOpen(true)}>
+            Edit course
+          </button>
+        )}
         <Link to={user.role === 'STUDENT' ? '/student' : '/instructor'} className="course-secondary-button">Back to dashboard</Link>
       </div>
     </div></section>
+
+    {editOpen && user.role === 'INSTRUCTOR' && (
+      <EditCourseModal course={course} onSave={(name, description) => updateCourse(course.id, name, description)}
+        onClose={() => setEditOpen(false)} />
+    )}
 
     {user.role === 'INSTRUCTOR' && <>
       <InstructorCourseTools courseId={course.id} />

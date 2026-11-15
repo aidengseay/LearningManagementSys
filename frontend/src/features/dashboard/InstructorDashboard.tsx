@@ -3,19 +3,12 @@ import { useAppStore } from '../app/store'
 import { getQuizzes } from '../../api/quizzes'
 import CourseCard from '../courses/CourseCard'
 import CreateCourseForm from '../courses/CreateCourseForm'
-import InstructorTools from '../courses/InstructorTools'
 
 export default function InstructorDashboard() {
   const { user, courses } = useAppStore()
   const [quizCount, setQuizCount] = useState(0)
-  const [quizVersion, setQuizVersion] = useState(0)
 
   const mine = courses.filter(course => course.instructorId === user?.id)
-  const [toolCourseId, setToolCourseId] = useState<number | null>(null)
-  // Fall back to the first course if nothing is picked (or the pick no longer exists)
-  const selectedCourseId = mine.some(course => course.id === toolCourseId)
-    ? toolCourseId
-    : mine[0]?.id ?? null
   const enrolledCount = mine.reduce(
     (total, course) => total + course.studentIds.length,
     0
@@ -27,7 +20,7 @@ export default function InstructorDashboard() {
       .then(results => { if (active) setQuizCount(results.reduce((sum, items) => sum + items.length, 0)) })
       .catch(() => { if (active) setQuizCount(0) })
     return () => { active = false }
-  }, [courses, quizVersion])
+  }, [courses])
 
   return (
     <div className="dashboard-page">

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
+import MarkdownText from '../../components/MarkdownText'
 import {
   deleteAssignment, downloadProtectedPdf, editAssignment, getAssignment, getMySubmission,
   getSubmissions, gradeAssignment, sendPdf, submitText,
@@ -89,7 +90,7 @@ export default function AssignmentPage() {
       <section className="asn-header">
         <span className="dashboard-eyebrow dashboard-eyebrow-dark">ASSIGNMENT</span>
         <h1>{assignment.title}</h1>
-        {assignment.description && <p className="asn-desc">{assignment.description}</p>}
+        {assignment.description && <MarkdownText className="asn-desc" text={assignment.description} />}
 
         <div className="asn-meta">
           <span>Due {formatDateTime(assignment.dueAt)}</span>
@@ -166,7 +167,7 @@ export default function AssignmentPage() {
               {mine.feedback && (
                 <div className="asn-feedback">
                   <span className="asn-label">Instructor feedback</span>
-                  <p>{mine.feedback}</p>
+                  <MarkdownText text={mine.feedback} />
                 </div>
               )}
             </div>
@@ -253,7 +254,7 @@ function StudentGradeRow({ s, a, disabled, onDownload, onGrade }: {
         </div>
       </div>
 
-      {s.text && <div className="asn-submission-text">{s.text}</div>}
+      {s.text && <MarkdownText className="asn-submission-text" text={s.text} />}
 
       {s.filename && (
         <div>
